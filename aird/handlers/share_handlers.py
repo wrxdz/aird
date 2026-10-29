@@ -1112,3 +1112,8 @@ class SharedFileHandler(BaseHandler):
             except Exception:
                 logging.debug("share_download audit log failed", exc_info=True)
         await MainHandler.serve_file(self, abspath)
+
+    @require_db
+    async def head(self, sid, path):
+        """Support HEAD requests for download probing (mobile Safari, etc.)."""
+        await self.get(sid, path)

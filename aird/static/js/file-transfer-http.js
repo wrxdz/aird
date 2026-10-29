@@ -527,8 +527,8 @@
 
           xhr.open('POST', uploadUrl());
           xhr.withCredentials = true;
-          xhr.setRequestHeader('X-Upload-Dir', uploadDir);
-          xhr.setRequestHeader('X-Upload-Filename', filename);
+          xhr.setRequestHeader('X-Upload-Dir', encodeURIComponent(uploadDir));
+          xhr.setRequestHeader('X-Upload-Filename', encodeURIComponent(filename));
           if (xsrf) xhr.setRequestHeader('X-XSRFToken', xsrf);
           xhr.setRequestHeader('Content-Type', 'application/octet-stream');
           xhr.send(file);
