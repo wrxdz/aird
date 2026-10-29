@@ -134,6 +134,7 @@ async def _serve_download_range(handler, abspath, byte_range, file_size, user_ke
     handler.set_header("Content-Length", str(byte_range.length))
     if handler.request.method == "HEAD":
         return
+    await handler.flush()
     if not use_compression and await _try_sendfile_download(
         handler, abspath, start, byte_range.length, user_key
     ):
@@ -161,6 +162,7 @@ async def _serve_download_full(handler, abspath, file_size, user_key):
     handler.set_header("Content-Length", str(file_size))
     if handler.request.method == "HEAD":
         return
+    await handler.flush()
     if await _try_sendfile_download(handler, abspath, 0, file_size, user_key):
         return
     await _stream_chunks_to_handler(
@@ -169,7 +171,14 @@ async def _serve_download_full(handler, abspath, file_size, user_key):
 
 
 async def _serve_download_body(handler, abspath, filename, user_key):
-    handler.set_header("Content-Disposition", f'attachment; filename="{filename}"')
+    # RFC 5987: encode non-ASCII filenames for Content-Disposition
+    from urllib.parse import quote
+    ascii_filename = filename.encode("ascii", "replace").decode("ascii")
+    encoded_filename = quote(filename, safe="")
+    handler.set_header(
+        "Content-Disposition",
+        f"attachment; filename=\"{ascii_filename}\"; filename*=UTF-8''{encoded_filename}"
+    )
     mime_type, _ = mimetypes.guess_type(abspath)
     mime_type = mime_type or APPLICATION_OCTET_STREAM
     handler.set_header("Content-Type", mime_type)
